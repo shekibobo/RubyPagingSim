@@ -57,6 +57,11 @@ class SimProc
   end
 end
 
+def print_activity
+  @segments.each_with_index {|s, index| puts "Seg #{index} => #{s}" }
+  @processes.each_value {|s| puts s }
+end
+
 def main
 
   exseq = File.open('exseq2.txt', 'r')
@@ -97,16 +102,19 @@ def main
             puts "Seg #{seg_index} => segment cleared: #{seg}"
           end
         end
+        # reinsert this process after the next in the execution list
+        # it will attempt to load and run after the next process is performed
         @exec_list.insert(exec_index + 2, p.to_a)
       end
 
       @segments.each_with_index {|s, index| puts "Seg #{index} => #{s}" }
       @processes.each_value {|s| puts s}
-    elsif pcb.size == 2
+    elsif pcb.size == 2 and pcb[1] == -1
+      # a process is exiting
       puts "removing pid #{pcb[0]}"
       @segments.each { |s| s.clear if s.pid == pcb[0] }
-      @segments.each_with_index {|s, index| puts "Seg #{index} => #{s}" }
-      @processes.each_value {|s| puts s }
+      @processes.delete pcb[0]
+      print_activity
     end
   end
 end
