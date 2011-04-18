@@ -106,9 +106,8 @@ def main
         # it will attempt to load and run after the next process is performed
         @exec_list.insert(exec_index + 2, p.to_a)
       end
+      print_activity
 
-      @segments.each_with_index {|s, index| puts "Seg #{index} => #{s}" }
-      @processes.each_value {|s| puts s}
     elsif pcb.size == 2 and pcb[1] == -1
       # a process is exiting
       puts "removing pid #{pcb[0]}"
