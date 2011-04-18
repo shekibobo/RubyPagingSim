@@ -51,20 +51,25 @@ class SimProc
   def to_s
     "[SimProc :pid => #{pid}, :code => #{code}, :data => #{data}]"
   end
+
+  def to_a
+    [@pid, @code, @data]
+  end
 end
 
 def main
 
-  exseq = File.open('exseq1.txt', 'r')
+  exseq = File.open('exseq2.txt', 'r')
   @exec_list = []
   @processes = {}
   @segments = Array.new(8) { MemSegment.new }
 
   exseq.each_with_index { |pcb| @exec_list << pcb.split.map(&:to_i) }
 
-  @exec_list.each do |pcb|
+  @exec_list.each_with_index do |pcb, exec_index|
     if pcb.size == 3
       p = SimProc.new(*pcb)
+      bad_load = false
 
       @processes.store p.pid, p
       @processes[p.pid].each do |proc_seg, bsize|
@@ -73,22 +78,28 @@ def main
             if !s.filled
               #find the first empty memory segment
               s.fill p.pid, proc_seg, seg_id
-              break;
+              break
             # if all slots are filled and we couldn't place a proc block
             elsif index == @segments.size - 1
-              puts "Cannot find a place for #{proc_seg} segment of size #{bsize}."
-              @segments.each_with_index do |seg, seg_index|
-                # clear any segments that didn't get loaded properly
-                if seg.pid == p.pid
-                  seg.clear
-                  puts "Seg #{seg_index} => segment cleared: #{seg}"
-                  break;
-                end
-              end
+              bad_load = true
+              puts "Cannot find a place for #{proc_seg} segment of size #{bsize}. Requeueing..."
+              break;
             end
           end
+          break if bad_load
         end
       end
+      if bad_load
+        @segments.each_with_index do |seg, seg_index|
+          # clear any segments that didn't get loaded properly
+          if seg.pid == p.pid
+            seg.clear
+            puts "Seg #{seg_index} => segment cleared: #{seg}"
+          end
+        end
+        @exec_list.insert(exec_index + 2, p.to_a)
+      end
+
       @segments.each_with_index {|s, index| puts "Seg #{index} => #{s}" }
       @processes.each_value {|s| puts s}
     elsif pcb.size == 2
