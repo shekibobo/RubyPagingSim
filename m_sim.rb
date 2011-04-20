@@ -54,20 +54,13 @@ class SimProc
   end
 end
 
-def print_activity
-  @segments.each_with_index {|s, index| puts "Seg #{index} => #{s}" }
-  @processes.each_value {|s| puts s }
-end
+class Manager
+  def print_activity
+    @segments.each_with_index {|s, index| puts "Seg #{index} => #{s}" }
+    @processes.each_value {|s| puts s }
+  end
 
-def main
-  exseq = File.open('exseq2.txt', 'r')
-  @exec_list = []
-  @processes = {}
-  @segments = Array.new(8) { MemSegment.new }
-
-  exseq.each_with_index { |pcb| @exec_list << pcb.split.map(&:to_i) }
-
-  @exec_list.each_with_index do |pcb, exec_index|
+  def load_process(pcb, exec_index)
     if pcb.size == 3
       p = SimProc.new(*pcb)
       bad_load = false
@@ -113,6 +106,24 @@ def main
       print_activity
     end
   end
+
+  def main
+    exseq = File.open('exseq2.txt', 'r')
+    @exec_list = []
+    @processes = {}
+    @segments = Array.new(8) { MemSegment.new }
+
+    exseq.each_with_index { |pcb| @exec_list << pcb.split.map(&:to_i) }
+
+    # this is the object that will be used to run each process with .next
+    @exec_object = @exec_list.each_with_index
+    # @exec_list.each_with_index { |pcb, exec_index| load_process(pcb, exec_index) }
+    (@exec_list.size + 1).times do
+      load_process(*@exec_object.next)
+    end
+  end
 end
 
-main
+
+manager = Manager.new
+manager.main
