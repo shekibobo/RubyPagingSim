@@ -26,10 +26,7 @@ class MemSegment
   end
 
   def to_s
-    if filled?
-      "#{seg} #{seg_id} for pid #{pid}"
-    else "empty"
-    end
+    filled? ? "#{seg} #{seg_id} for pid #{pid}" : "Free"
   end
 end
 
@@ -63,7 +60,6 @@ def print_activity
 end
 
 def main
-
   exseq = File.open('exseq2.txt', 'r')
   @exec_list = []
   @processes = {}
@@ -94,6 +90,7 @@ def main
           break if bad_load
         end
       end
+      # recover pages and queue the process for later
       if bad_load
         @segments.each_with_index do |seg, seg_index|
           # clear any segments that didn't get loaded properly
