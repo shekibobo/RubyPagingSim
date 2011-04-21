@@ -2,6 +2,7 @@
 require 'rubygems'
 require 'ruby-debug'
 
+# a class represenging a page in memory with size 512 bytes
 class MemSegment
   attr_accessor :filled, :pid, :seg, :seg_id
 
@@ -13,11 +14,13 @@ class MemSegment
     self
   end
 
+  # fill the page with a segment from the process
   def fill(pid, seg, seg_id)
     @filled = true; @pid = pid; @seg = seg; @seg_id = seg_id;
     self
   end
 
+  # remove the any process from the memory page
   def clear
     self.filled = false; self.pid = nil; self.seg = nil;
     self
@@ -32,6 +35,9 @@ class MemSegment
   end
 end
 
+# a simple simulated process with a pid, a code segment of a given size, and a
+# data segment of a given size which can be loaded into memory. These are
+# enumerable so as to be stepped through in an easy way by the manager.
 class SimProc
   include Enumerable
   attr_accessor :pid, :code, :data
@@ -42,6 +48,7 @@ class SimProc
     @data = data.to_i
   end
 
+  # a way to retrieve each segment without specifying what segment it is
   def each
     yield :code, code
     yield :data, data
@@ -51,11 +58,15 @@ class SimProc
     "[SimProc :pid => #{pid}, :code => #{code}, :data => #{data}]"
   end
 
+  # necessary for requeueing into the execution list
   def to_a
     [@pid, @code, @data]
   end
 end
 
+# the memory manager class is the controller which determines when, where, and
+# how processes are loaded into memory, when they can't be loaded, how to reload,
+# and when to clear them from memory.
 class Manager
   attr_reader :segments, :processes, :exec_list, :exec_object, :feedback
 
@@ -72,6 +83,9 @@ class Manager
   end
 
   def load_process(pcb, exec_index)
+    # attempt to load the process's code and data segments into memory
+    # if there is not enough memory, the load will be rolled back and the
+    # process will be queued to run at a later time.
     if pcb.size == 3
       p = SimProc.new(*pcb)
       bad_load = false
@@ -112,13 +126,15 @@ class Manager
 
     elsif pcb.size == 2 and pcb[1] == -1
       # a process is exiting
-      @feedback +=  "removing pid #{pcb[0]}\n"
+      @feedback +=  "Process #{pcb[0]} completed. Clearing from memory.\n"
       @segments.each { |s| s.clear if s.pid == pcb[0] }
       @processes.delete pcb[0]
       print_activity
     end
   end
 
+  # load the execution list from a file into an array
+  # create an enumerable referencing that array to be stepped through.
   def set_exec_list(filename)
     file = File.open filename
     @exec_list = []
@@ -128,14 +144,18 @@ class Manager
   end
 
   def exec_list_str
+    # output the execution list in a readable format
     @exec_list.map {|p| "#{p.join ' '}\n"}
   end
 
   def load_next
+    # loads the next process into memory if there is one
     load_process(*@exec_object.next) rescue alert "End of processes!"
   end
 
   def main
+    # this should be fully functional if you comment out the Shoes.app section
+    # and load the manager.main section. Untested in final version.
     exseq = File.open('exseq2.txt')
     set_exec_list exseq
     # @exec_list.each_with_index { |pcb, exec_index| load_process(pcb, exec_index) }
@@ -151,9 +171,16 @@ manager.main
 =end
 
 #=begin
+# the GUI is powered by Shoes, which is more awesome than I originally thought
+# Special thanks to Steve Klabnik, maintainer of the Shoes project, for his
+# guidance in usage of this toolkit.
 Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
   @manager = Manager.new
   @pages = []
+  @page_background = []
+  @page_contents = []
+
+  # file input and process queue column
   stack(:width => 200) do
     title "Execution Queue", :size => 14
 
@@ -173,24 +200,34 @@ Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
     end
   end
 
+  # memory pages and process stepping control column
   stack(:width => 200) do
+    caption "Memory Pages"
     for page in @manager.segments
-      @pages << para(page) {background (page.empty? ? green : red)}
+      @pages << stack do
+        @page_background << background(page.filled? ? red : green)
+        @page_contents << para(page)
+      end
     end
     @next_btn = button "Next"
     @next_btn.click do
       @manager.exec_list.empty? ? alert("You must load an execution list!") : @manager.load_next
       @manager.segments.each_with_index do |page, index|
-        @pages[index].replace(page)
+        @page_contents[index].replace(page)
+        @page_background[index] = (page.filled? ? red : green)
       end
       @exec_lines.replace @manager.exec_list_str
       @terminal.replace @manager.feedback
     end
   end
 
+  # terminal feedback section
   stack(:width => 400) do
     caption "Terminal Feedback"
-    @terminal = para "", :size => 8
+    stack(:width => 350) do
+      background white
+      @terminal = para "", :size => 8
+    end
   end
 
 end
