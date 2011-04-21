@@ -57,7 +57,7 @@ class SimProc
 end
 
 class Manager
-  attr_reader :segments, :processes, :exec_list, :exec_object
+  attr_reader :segments, :processes, :exec_list, :exec_object, :feedback
 
   def initialize
     @exec_list = []
@@ -82,11 +82,12 @@ class Manager
             if !s.filled
               #find the first empty memory segment
               s.fill p.pid, proc_seg, seg_id
+              @feedback += "Incoming process #{p.pid} with #{proc_seg} block mapped to page #{seg_id}\n"
               break
             # if all slots are filled and we couldn't place a proc block
             elsif index == @segments.size - 1
               bad_load = true
-              puts "Cannot find a place for #{proc_seg} segment of size #{bsize}. Requeueing..."
+              @feedback += "Cannot find a place for #{proc_seg} segment of size #{bsize}. Requeueing...\n"
               break;
             end
           end
@@ -99,7 +100,7 @@ class Manager
           # clear any segments that didn't get loaded properly
           if seg.pid == p.pid
             seg.clear
-            puts "Seg #{seg_index} => segment cleared: #{seg}"
+            @feedback += "Seg #{seg_index} => segment cleared: #{seg}\n"
           end
         end
         # reinsert this process after the next in the execution list
@@ -110,7 +111,7 @@ class Manager
 
     elsif pcb.size == 2 and pcb[1] == -1
       # a process is exiting
-      puts "removing pid #{pcb[0]}"
+      @feecback += "removing pid #{pcb[0]}\n"
       @segments.each { |s| s.clear if s.pid == pcb[0] }
       @processes.delete pcb[0]
       print_activity
@@ -171,7 +172,7 @@ Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
     end
   end
 
-  stack(:width => 300) do
+  stack(:width => 200) do
     for page in @manager.segments
       @pages << para(page) {background (page.empty? ? green : red)}
     end
@@ -182,7 +183,13 @@ Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
         @pages[index].replace(page)
       end
       @exec_lines.replace @manager.exec_list_str
+      @terminal.replace @manager.feedback
     end
+  end
+
+  stack(:width => 400) do
+    caption "Terminal Feedback"
+    @terminal = para ""
   end
 
 end
