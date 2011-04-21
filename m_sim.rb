@@ -83,6 +83,7 @@ class Manager
             if !s.filled
               #find the first empty memory segment
               s.fill p.pid, proc_seg, seg_id
+              @feedback += "Incoming process #{p.pid} with #{proc_seg} segment loaded to page #{seg_id}\n"
               break
             # if all slots are filled and we couldn't place a proc block
             elsif index == @segments.size - 1
@@ -100,7 +101,7 @@ class Manager
           # clear any segments that didn't get loaded properly
           if seg.pid == p.pid
             seg.clear
-            puts "Seg #{seg_index} => segment cleared: #{seg}"
+            @feedback += "Seg #{seg_index} => segment reset: #{seg}\n"
           end
         end
         # reinsert this process after the next in the execution list
@@ -111,7 +112,7 @@ class Manager
 
     elsif pcb.size == 2 and pcb[1] == -1
       # a process is exiting
-      puts "removing pid #{pcb[0]}"
+      @feedback +=  "removing pid #{pcb[0]}\n"
       @segments.each { |s| s.clear if s.pid == pcb[0] }
       @processes.delete pcb[0]
       print_activity
