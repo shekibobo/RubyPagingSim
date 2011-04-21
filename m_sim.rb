@@ -119,6 +119,7 @@ class Manager
 
   def set_exec_list(filename)
     file = File.open filename
+    @exec_list = []
     file.each { |pcb| @exec_list << pcb.split.map(&:to_i) } unless file.nil?
     filename
   end
