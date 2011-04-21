@@ -140,6 +140,7 @@ class Manager
     @exec_list = []
     file.each { |pcb| @exec_list << pcb.split.map(&:to_i) } unless file.nil?
     @exec_object = @exec_list.each_with_index
+    @feedback = ""
     filename
   end
 
@@ -197,6 +198,7 @@ Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
       @manager.set_exec_list filename
       # format output
       @exec_lines.replace @manager.exec_list_str
+      @terminal.replace @manager.feedback
     end
   end
 
@@ -204,7 +206,7 @@ Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
   stack(:width => 200) do
     caption "Memory Pages"
     for page in @manager.segments
-      @pages << stack do
+      @pages << stack(:width => 165) do
         @page_background << background(page.filled? ? red : green)
         @page_contents << para(page)
       end
@@ -214,7 +216,6 @@ Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
       @manager.exec_list.empty? ? alert("You must load an execution list!") : @manager.load_next
       @manager.segments.each_with_index do |page, index|
         @page_contents[index].replace(page)
-        @page_background[index] = (page.filled? ? red : green)
       end
       @exec_lines.replace @manager.exec_list_str
       @terminal.replace @manager.feedback
