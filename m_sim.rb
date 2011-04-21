@@ -1,4 +1,6 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env shoes
+require 'rubygems'
+require 'ruby-debug'
 
 class MemSegment
   attr_accessor :filled, :pid, :seg, :seg_id
@@ -55,6 +57,14 @@ class SimProc
 end
 
 class Manager
+  attr_reader :segments, :processes, :exec_list, :exec_object
+
+  def initialize
+    @exec_list = []
+    @processes = {}
+    @segments = Array.new(8) { MemSegment.new }
+  end
+
   def print_activity
     @segments.each_with_index {|s, index| puts "Seg #{index} => #{s}" }
     @processes.each_value {|s| puts s }
@@ -107,13 +117,19 @@ class Manager
     end
   end
 
-  def main
-    exseq = File.open('exseq2.txt', 'r')
-    @exec_list = []
-    @processes = {}
-    @segments = Array.new(8) { MemSegment.new }
+  def set_exec_list(filename)
+    file = File.open filename
+    file.each { |pcb| @exec_list << pcb.split.map(&:to_i) } unless file.nil?
+    filename
+  end
 
-    exseq.each_with_index { |pcb| @exec_list << pcb.split.map(&:to_i) }
+  def load_next
+    load_process(*@exec_object.next)
+  end
+
+  def main
+    exseq = File.open('exseq2.txt')
+    set_exec_list exseq
 
     # this is the object that will be used to run each process with .next
     @exec_object = @exec_list.each_with_index
@@ -124,6 +140,33 @@ class Manager
   end
 end
 
-
+=begin
 manager = Manager.new
 manager.main
+=end
+
+#=begin
+Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
+  @manager = Manager.new
+  stack(:width => 200) do
+    @exec_list = stack do
+      title "Execution Queue", :size => 14
+      @exec_lines = para "click button to load", :size => 9
+      @file_button = button "Load Process List"
+      #debugger
+      @file_button.click do
+        filename = ask_open_file
+        @manager.set_exec_list filename
+        # format output
+        @exec_lines.replace @manager.exec_list.map {|p| "#{p.join ' '}\n"}
+      end
+    end
+  end
+  stack(:width => 300) do
+    title "Memory Pages"
+    for page in @memory.segments do
+      para page
+    end
+  end
+end
+#=end
