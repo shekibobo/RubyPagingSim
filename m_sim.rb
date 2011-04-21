@@ -124,8 +124,13 @@ class Manager
     filename
   end
 
+  def exec_list_str
+    @exec_list.map {|p| "#{p.join ' '}\n"}
+  end
+
   def load_next
     load_process(*@exec_object.next)
+    print_activity
   end
 
   def main
@@ -136,7 +141,7 @@ class Manager
     @exec_object = @exec_list.each_with_index
     # @exec_list.each_with_index { |pcb, exec_index| load_process(pcb, exec_index) }
     (@exec_list.size + 1).times do
-      load_process(*@exec_object.next)
+      load_next
     end
   end
 end
@@ -149,25 +154,40 @@ manager.main
 #=begin
 Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
   @manager = Manager.new
+  @pages = []
   stack(:width => 200) do
-    @exec_list = stack do
-      title "Execution Queue", :size => 14
+    title "Execution Queue", :size => 14
+
+    @exec_list = stack(:width => 165) do
+      background white
       @exec_lines = para "click button to load", :size => 9
-      @file_button = button "Load Process List"
-      #debugger
-      @file_button.click do
-        filename = ask_open_file
-        @manager.set_exec_list filename
-        # format output
-        @exec_lines.replace @manager.exec_list.map {|p| "#{p.join ' '}\n"}
+    end
+
+    @file_button = button "Load Process List"
+
+    @file_button.click do
+      # get the file and parse it into our execution list
+      filename = ask_open_file
+      @manager.set_exec_list filename
+      # format output
+      @exec_lines.replace @manager.exec_list_str
+    end
+  end
+
+  stack(:width => 300) do
+    for page in @manager.segments
+      @pages << para(page)
+    end
+    @next_btn = button "Next"
+    @next_btn.click do
+      @manager.load_next
+      alert "blah"
+      @manager.segments.each_with_index do |page, index|
+        alert "blah #{index}"
+        @pages[index].replace page
       end
     end
   end
-  stack(:width => 300) do
-    title "Memory Pages"
-    for page in @memory.segments do
-      para page
-    end
-  end
+
 end
 #=end
