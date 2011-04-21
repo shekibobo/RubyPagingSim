@@ -1,6 +1,6 @@
 #!/usr/bin/env shoes
-require 'rubygems'
-require 'ruby-debug'
+#require 'rubygems'
+#require 'ruby-debug'
 
 #
 # Author: Joshua Kovach
