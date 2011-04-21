@@ -2,6 +2,17 @@
 require 'rubygems'
 require 'ruby-debug'
 
+#
+# Author: Joshua Kovach
+# Course: CIS 452
+# Date:   21 April 2011
+# Description:
+#   Implements a simulated process manager which supports non-contiguous memory
+#   paging for process loading. GUI is built using the Shoes toolkit for Ruby.
+#   Project specs are listed at:
+#     http://www.cis.gvsu.edu/~dulimarh/CS452/Projects/MM/
+#
+
 # a class represenging a page in memory with size 512 bytes
 class MemSegment
   attr_accessor :filled, :pid, :seg, :seg_id
