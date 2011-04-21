@@ -130,16 +130,12 @@ class Manager
   end
 
   def load_next
-    load_process(*@exec_object.next)
-    print_activity
+    load_process(*@exec_object.next) rescue alert "End of processes!"
   end
 
   def main
     exseq = File.open('exseq2.txt')
     set_exec_list exseq
-
-    # this is the object that will be used to run each process with .next
-
     # @exec_list.each_with_index { |pcb, exec_index| load_process(pcb, exec_index) }
     (@exec_list.size + 1).times do
       load_next
@@ -181,10 +177,8 @@ Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
     end
     @next_btn = button "Next"
     @next_btn.click do
-      @manager.load_next
-      alert "blah"
+      @manager.exec_list.empty? ? alert("You must load an execution list!") : @manager.load_next
       @manager.segments.each_with_index do |page, index|
-        alert "blah #{index}"
         @pages[index].replace page
       end
     end
