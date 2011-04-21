@@ -57,12 +57,13 @@ class SimProc
 end
 
 class Manager
-  attr_reader :segments, :processes, :exec_list, :exec_object
+  attr_reader :segments, :processes, :exec_list, :exec_object, :feedback
 
   def initialize
     @exec_list = []
     @processes = {}
     @segments = Array.new(8) { MemSegment.new }
+    @feedback = ""
   end
 
   def print_activity
@@ -86,7 +87,7 @@ class Manager
             # if all slots are filled and we couldn't place a proc block
             elsif index == @segments.size - 1
               bad_load = true
-              puts "Cannot find a place for #{proc_seg} segment of size #{bsize}. Requeueing..."
+              @feedback += "Cannot find a place for #{proc_seg} segment of size #{bsize}. Requeueing...\n"
               break;
             end
           end
@@ -182,12 +183,13 @@ Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
         @pages[index].replace(page)
       end
       @exec_lines.replace @manager.exec_list_str
+      @terminal.replace @manager.feedback
     end
   end
 
   stack(:width => 400) do
     caption "Terminal Feedback"
-    @terminal = para ""
+    @terminal = para "", :size => 8
   end
 
 end
