@@ -121,6 +121,7 @@ class Manager
     file = File.open filename
     @exec_list = []
     file.each { |pcb| @exec_list << pcb.split.map(&:to_i) } unless file.nil?
+    @exec_object = @exec_list.each_with_index
     filename
   end
 
@@ -138,7 +139,7 @@ class Manager
     set_exec_list exseq
 
     # this is the object that will be used to run each process with .next
-    @exec_object = @exec_list.each_with_index
+
     # @exec_list.each_with_index { |pcb, exec_index| load_process(pcb, exec_index) }
     (@exec_list.size + 1).times do
       load_next
