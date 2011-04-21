@@ -173,14 +173,15 @@ Shoes.app(:title => "Paging Simulator", :width => 800, :height => 450) do
 
   stack(:width => 300) do
     for page in @manager.segments
-      @pages << para(page)
+      @pages << para(page) {background (page.empty? ? green : red)}
     end
     @next_btn = button "Next"
     @next_btn.click do
       @manager.exec_list.empty? ? alert("You must load an execution list!") : @manager.load_next
       @manager.segments.each_with_index do |page, index|
-        @pages[index].replace page
+        @pages[index].replace(page)
       end
+      @exec_lines.replace @manager.exec_list_str
     end
   end
 
